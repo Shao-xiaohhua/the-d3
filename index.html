@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>D3动态数据转换</title>
+</head>
+<style>
+  .one {
+    min-width: 800px;
+    max-width: 100%;
+    height: 800px;
+    background: red;
+    padding: 20px;
+  }
+  .inner-content {
+    width: 800px;
+    height: 100%;
+    background: white;
+  }
+  .bvutton {
+    position: absolute;
+    right: 30px;
+    top: 50px;
+    width: 80px;
+    height: 50px;
+    background: deepskyblue;
+    float: right;
+    text-align: center;
+    line-height: 50px;
+    color: white;
+    cursor: pointer;
+  }
+  .bvutton.b-one {
+     right: 200px;
+   }
+</style>
+<body>
+<div class="one">
+  <div class="inner-content"></div>
+  <div class="bvutton b-one">按钮1</div>
+  <div class="bvutton b-two">按钮2</div>
+</div>
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="jquery.js"></script>
+<script>
+  //创建柱子状图
+  $(function (){
+    var width = $('.inner-content').outerWidth();
+    var height = $('.inner-content').outerHeight();
+
+    var oneBox = d3.select('.inner-content');
+
+    var svg1 = oneBox.append('svg').attr('width',width).attr('height',height).attr('class','svga');
+
+    var arr1 = [[
+      {name: "吃"},
+      {name: "喝"},
+      {name: "玩"},
+      {name: "乐"},
+      {name: "金"},
+      {name: "刚"},
+      {name: "不"},
+      {name: "坏"}], [
+      {source: 0, target: 1},
+      {source: 0, target: 2},
+      {source: 0, target: 3},
+      {source: 1, target: 4},
+      {source: 1, target: 5},
+      {source: 1, target: 6},
+      {source: 2, target: 7},]]
+
+    var  arr2 = [[
+      {name: "桂林"},
+      {name: "广州"},
+      {name: "厦门"},
+      {name: "杭州"},
+      {name: "上海"},
+      {name: "青岛"},
+      {name: "天津"},
+      {name: "西藏"},
+      {name: "桂林"},
+      {name: "广州"},
+      {name: "厦门"},
+      {name: "杭州"},
+      {name: "上海"},
+      {name: "青岛"},
+      {name: "天津"},
+      {name: "西藏"}], [
+      {source: 0, target: 1},
+      {source: 0, target: 2},
+      {source: 0, target: 3},
+      {source: 1, target: 4},
+      {source: 1, target: 5},
+      {source: 1, target: 6},
+      {source: 2, target: 7},
+      {source: 0, target: 8},
+      {source: 0, target: 9},
+      {source: 0, target: 10},
+      {source: 1, target: 11},
+      {source: 1, target: 12},
+      {source: 1, target: 13},
+      {source: 2, target: 14},
+      {source: 2, target: 15}]]
+
+    var force = d3.layout.force ()
+      .nodes (arr2[0]) //指定节点数组
+      .links (arr2[1]) //指定连线数组
+      .size ([width, height]) //指定作用域范围
+      .linkDistance (100) //指定连线长度
+      .charge ([-500]); //相互之间的作用力
+    force.start ();    //开始作用
+
+    var color = d3.scale.category20 ();
+
+    var svg_edges = svg1.selectAll ("line")
+      .data (arr2[1])
+      .enter().append ("line")
+      .style ("stroke", "#ccc")
+      .style ("stroke-width", 10);
+
+
+    svg_edges;
+
+    var svg_nodes = svg1.selectAll ("circle")
+      .data (arr2[0])
+      .enter ().append ("circle")
+      .attr ("r", 20)
+      .style ("fill", function (d, i) {
+        return color (i);
+      })
+      .call (force.drag);
+
+
+    svg_nodes;
+
+    var svg_texts = svg1.selectAll ("text")
+      .data (arr2[0])
+      .enter ().append ("text")
+      .style ("fill", "black")
+      .attr ("dx", 20)
+      .attr ("dy", 8)
+      .text (function (d) {
+        return d.name;
+      });
+
+    svg_texts;
+
+    var svg_edges2 = svg1.selectAll ("line")
+      .data (arr2[1])
+      .exit();
+
+    var svg_nodes2 = svg1.selectAll ("circle")
+      .data (arr2[0])
+      .exit();
+
+    var svg_texts2 = svg1.selectAll ("text")
+      .data (arr2[0])
+      .exit();
+
+    svg_edges2,
+      svg_nodes2,
+      svg_texts2.remove();
+    force.on ("tick", function () { //对于每一个时间间隔
+      //更新连线坐标
+      svg_edges.attr ("x1", function (d) {
+          return d.source.x;
+        })
+        .attr ("y1", function (d) {
+          return d.source.y;
+        })
+        .attr ("x2", function (d) {
+          return d.target.x;
+        })
+        .attr ("y2", function (d) {
+          return d.target.y;
+        });
+      //更新节点坐标
+      svg_nodes.attr ("cx", function (d) {
+          return d.x;
+        })
+        .attr ("cy", function (d) {
+          return d.y;
+        });
+      //更新文字坐标
+      svg_texts.attr ("x", function (d) {
+          return d.x;
+        })
+        .attr ("y", function (d) {
+          return d.y;
+        });
+    });
+
+
+    var butOne = d3.select('.b-one');
+    var butTwo = d3.select('.b-two');
+
+
+    butOne.on('click',function (){
+      svg1.selectAll ("line").remove();
+
+      svg1.selectAll ("circle").remove();
+
+      svg1.selectAll ("text").remove();
+      var a = arr1[0];
+      var  b = arr1[1];
+      force.nodes (a) //指定节点数组
+        .links (b) //指定连线数组
+        .size ([width, height]) //指定作用域范围
+        .linkDistance (200) //指定连线长度
+        .charge ([-500]); //相互之间的作用力
+      force.start ();    //开始作用
+
+      var aa = svg1.selectAll ("line").data (b).enter()
+        .append ("line")
+        .style ("stroke", "red")
+        .style ("stroke-width", 10);
+
+      var bb = svg1.selectAll ("circle").data (a).enter()
+        .append ("circle")
+        .attr ("r", 20)
+        .style ("fill", function (d, i) {
+          return color (i);
+        })
+        .call (force.drag);
+
+      var cc = svg1.selectAll ("text").data (a).enter()
+        .append ("text")
+        .style ("fill", "black")
+        .attr ("dx", 20)
+        .attr ("dy", 8)
+        .text (function (d) {
+          return d.name;
+          console.log(d.name)
+        });
+      force.on ("tick", function () { //对于每一个时间间隔
+        //更新连线坐标
+        aa.attr ("x1", function (d) {
+            return d.source.x;
+          })
+          .attr ("y1", function (d) {
+            return d.source.y;
+          })
+          .attr ("x2", function (d) {
+            return d.target.x;
+          })
+          .attr ("y2", function (d) {
+            return d.target.y;
+          });
+        //更新节点坐标
+        bb.attr ("cx", function (d) {
+            return d.x;
+          })
+          .attr ("cy", function (d) {
+            return d.y;
+          });
+        //更新文字坐标
+        cc.attr ("x", function (d) {
+            return d.x;
+          })
+          .attr ("y", function (d) {
+            return d.y;
+          });
+      });
+
+    });
+
+    butTwo.on('click',function (){
+      svg1.selectAll ("line").remove();
+
+      svg1.selectAll ("circle").remove();
+
+      svg1.selectAll ("text").remove();
+
+      var a = arr2[0];
+      var b = arr2[1]
+      force.nodes (a) //指定节点数组
+        .links (b) //指定连线数组
+        .size ([width, height]) //指定作用域范围
+        .linkDistance (100) //指定连线长度
+        .charge ([-500]); //相互之间的作用力
+      force.start ();    //开始作用
+
+      var aa = svg1.selectAll ("line").data (b).enter()
+        .append ("line")
+        .style ("stroke", "blue")
+        .style ("stroke-width", 1);
+
+
+      var bb=  svg1.selectAll ("circle").data (a).enter()
+        .append ("circle")
+        .attr ("r", 20)
+        .style ("fill", function (d, i) {
+          return color (i);
+        })
+        .call (force.drag);
+
+      var cc =  svg1.selectAll ("text").data (a).enter()
+        .append ("text")
+        .style ("fill", "black")
+        .attr ("dx", 20)
+        .attr ("dy", 8)
+        .text (function (d) {
+          return d.name;
+        });
+
+      force.on ("tick", function () { //对于每一个时间间隔
+        //更新连线坐标
+        aa.attr ("x1", function (d) {
+            return d.source.x;
+          })
+          .attr ("y1", function (d) {
+            return d.source.y;
+          })
+          .attr ("x2", function (d) {
+            return d.target.x;
+          })
+          .attr ("y2", function (d) {
+            return d.target.y;
+          });
+        //更新节点坐标
+        bb.attr ("cx", function (d) {
+            return d.x;
+          })
+          .attr ("cy", function (d) {
+            return d.y;
+          });
+        //更新文字坐标
+        cc.attr ("x", function (d) {
+            return d.x;
+          })
+          .attr ("y", function (d) {
+            return d.y;
+          });
+      });
+      console.log(22);
+    });
+  });
+
+</script>
+</body>
+</html>
